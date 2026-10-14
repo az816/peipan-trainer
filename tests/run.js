@@ -187,6 +187,20 @@ if (PP.BUILD) {
   const wd = B.gradeWires({ ...okW, w6: { sec: '0.75', col: '蓝', duct: '0' } }); if (wd.find(r => r.k === 'w6').okD) bad('信号线走强电槽应被查出');
   const empty = B.score({}); if (empty.total !== 0) bad('空白应 0 分', JSON.stringify(empty));
   console.log(`  选型 ${B.sel.length} 项，元件 ${B.parts.length} 个，走线 ${B.wires.length} 根，参考答案 ${sc.total} 分`);
+  // 每一套图纸：参考答案满分、空白 0 分、参考布置不超导轨、选项都在下拉列表里、学习路线能找到它
+  for (const P of PP.BUILDS) {
+    const best = Object.fromEntries(P.sel.map(it => [it.k, it.opts.findIndex(o => o[1] === 2)]));
+    if (P.sel.some(it => !it.opts.some(o => o[1] === 2))) bad('选型题缺推荐答案', P.id);
+    if (P.answer.length !== P.rows || P.answer.some(r => P.used(r) > P.CAP)) bad('参考布置排数不对或超出导轨', P.id);
+    if (P.parts.some(p => !P.answer.some(r => r.includes(p.k)))) bad('参考布置漏了元件', P.id);
+    const w = Object.fromEntries(P.wires.map(x => [x.k, { sec: x.sec[0], col: x.col[0], duct: String(x.duct) }]));
+    if (P.wires.some(x => !x.sec.every(v => P.SEC.includes(v)) || !x.col.every(v => P.COL.includes(v)) || !(x.duct in P.DUCT))) bad('走线答案不在选项里', P.id);
+    const s = P.score({ sel: best, layout: P.answer, wires: w });
+    if (s.total !== 100) bad('参考答案应满分', P.id, JSON.stringify(s));
+    if (P.score({}).total !== 0) bad('空白应 0 分', P.id);
+    if (!PP.LEVELS.some(L => L.items.some(it => it.t === 'build' && it.id === P.id))) bad('学习路线里没有这套图纸', P.id);
+    console.log(`  ${'★'.repeat(P.star).padEnd(5)} ${P.name}：选型 ${P.sel.length}、元件 ${P.parts.length}、规则 ${P.rules.length}、走线 ${P.wires.length}，参考答案 ${s.total} 分`);
+  }
 }
 // 题库：不能靠“选最长的那个”蒙对（正确答案是唯一最长选项的比例 ≤ 20%）
 {

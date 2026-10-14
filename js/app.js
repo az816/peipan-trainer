@@ -39,7 +39,7 @@
   PP.current = () => current;
   PP.openExercise = (exId, view) => go('lab', { ex: exId, view });
   // 打开学习路线里的一项
-  PP.openItem = it => (it.t === 'ex' ? PP.openExercise(it.id) : it.t === 'lesson' ? go('lesson-' + it.id) : it.t === 'build' ? go('build') : go(it.id));
+  PP.openItem = it => (it.t === 'ex' ? PP.openExercise(it.id) : it.t === 'lesson' ? go('lesson-' + it.id) : it.t === 'build' ? go('build', { proj: it.id }) : go(it.id));
   function boot() {
     $('nav').innerHTML = NAV.map(([k, t]) => `<button data-p="${k}">${t}</button>`).join('');
     $('pages').innerHTML = `<nav class="subnav" id="subnav" aria-label="知识库" hidden></nav>` + pages.map(p => `<div id="page-${p.id}" hidden></div>`).join('');
