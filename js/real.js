@@ -325,7 +325,19 @@ ${RG(p + 'cy', '#fff3a6', '#f2c200', '#a08000')}${RG(p + 'cb', '#9cc9ff', '#2a6b
     if (t === 'vfd') return rect(x, y, w, h, u('gk'), 'rx="2"') + rect(x + 6, y + 8, w - 12, 14, '#9fd27a') + T(cx, y + 19, '50.0', MONO + 'font-size:8px;fill:#1f3b10') + `<circle cx="${cx}" cy="${y + 34}" r="5" fill="#6e757b"/>` + lb(lab, '#d7dcdf');
     if (t === 'kt') return rect(x, y, w, h, u('gt'), 'rx="2" stroke="#8d918b"') + `<circle cx="${cx}" cy="${y + h * .42}" r="${Math.min(w, h) * .26}" fill="#f6f6f2" stroke="#4b5053"/><line x1="${cx}" y1="${y + h * .42}" x2="${cx + Math.min(w, h) * .18}" y2="${y + h * .42 - Math.min(w, h) * .12}" stroke="#d63a2f" stroke-width="1.6"/>` + lb(lab, '#1f2523', y + h - 6);
     if (t === 'ai') { let s = rect(x, y, w, h, u('gk'), 'rx="2" stroke="#1f2327"') + rect(x + 2, y + 2, w - 4, 8, '#6e757b') + rect(x + 2, y + h - 10, w - 4, 8, '#6e757b'); for (let i = 0; i < 4; i++) s += rect(x + 5, y + 14 + i * 5, 4, 2.6, i ? '#4b5156' : '#3ad65d'); return s + T(cx, y + h - 14, lab, 'font-size:9px;font-weight:700;fill:#d7dcdf'); }
-    if (t === 'nbar') { let s = rect(x, y, w, h, u('gn'), 'stroke="#8a6a1c"'); for (let i = 0; i < Math.floor(w / 8); i++) s += `<circle cx="${x + 4 + i * 8}" cy="${y + h / 2}" r="2" fill="#d9dcd6" stroke="#666"/>`; return s; }
+    // 电动机保护断路器（GV2 这类）：黑壳 + 旋钮整定 + 绿 / 红按钮
+    if (t === 'qm') return rect(x, y, w, h, '#2b2e31', 'rx="2" stroke="#111"') + `<circle cx="${cx}" cy="${y + h * .36}" r="${Math.min(w, h) * .2}" fill="#f2f2ec" stroke="#555"/><line x1="${cx}" y1="${y + h * .36}" x2="${cx + Math.min(w, h) * .14}" y2="${y + h * .3}" stroke="#d63a2f" stroke-width="1.6"/>` + rect(x + 4, y + h * .6, w / 2 - 6, 7, '#2f9a4c', 'rx="1"') + rect(cx + 2, y + h * .6, w / 2 - 6, 7, '#cf3a2e', 'rx="1"') + lb(lab, '#e6e9e6', y + h - 5);
+    // 温控器：小白盒 + 蓝色刻度盘
+    if (t === 'th') return rect(x, y + 6, w, h - 12, '#f3f3ee', 'rx="2" stroke="#9fa29b"') + `<circle cx="${cx}" cy="${y + h * .42}" r="${Math.min(w, h) * .3}" fill="#2a6bd1"/><circle cx="${cx}" cy="${y + h * .42}" r="${Math.min(w, h) * .12}" fill="#f3f3ee"/>` + lb(lab, '#1f2523', y + h - 10);
+    // 安全继电器：黄色外壳（常见 Pilz 那种）+ 绿灯
+    if (t === 'ks') return rect(x, y, w, h, '#f2c200', 'rx="2" stroke="#a37c00"') + rect(x + 2, y + 2, w - 4, 7, '#3a3e42') + rect(x + 2, y + h - 9, w - 4, 7, '#3a3e42') + `<circle cx="${cx}" cy="${y + 18}" r="2" fill="#3ad65d"/><circle cx="${cx}" cy="${y + 25}" r="2" fill="#3ad65d"/>` + T(cx, y + h - 14, lab, 'font-size:8px;font-weight:700;fill:#1f2523');
+    // 伺服驱动器：黑壳 + 红色数码管
+    if (t === 'sv') return rect(x, y, w, h, u('gk'), 'rx="2" stroke="#111"') + rect(x + 5, y + 8, w - 10, 12, '#1a0606') + T(cx, y + 17.5, 'run', MONO + 'font-size:8px;font-weight:700;fill:#ff5a3c') + rect(x + 5, y + 26, w - 10, 6, '#55595d', 'rx="1"') + lb(lab, '#d7dcdf');
+    // 工业交换机：深灰 + 一排 RJ45 口和绿灯
+    if (t === 'sw') { let s = rect(x, y, w, h, '#3a3f44', 'rx="2" stroke="#1f2327"'); for (let i = 0; i < 4; i++) s += rect(x + 4, y + 10 + i * 8, w - 8, 6, '#1b1e21', 'rx="1"') + `<circle cx="${x + w - 7}" cy="${y + 13 + i * 8}" r="1.3" fill="#3ad65d"/>`; return s + lb(lab, '#d7dcdf'); }
+    // N 排：装在蓝色绝缘子上的铜排（和 PE 排区分）
+    if (t === 'nb') { let s = rect(x, y + h / 2 - 10, 8, 20, '#1f62c4', 'rx="2"') + rect(x + w - 8, y + h / 2 - 10, 8, 20, '#1f62c4', 'rx="2"') + rect(x + 6, y + h / 2 - 5, w - 12, 10, u('gn'), 'stroke="#8a6a1c"'); for (let i = 0; i < Math.floor((w - 14) / 8); i++) s += `<circle cx="${x + 11 + i * 8}" cy="${y + h / 2}" r="2.2" fill="#d9dcd6" stroke="#666"/>`; return s + T(cx, y + h / 2 + 20, lab, 'font-size:9px;font-weight:700;fill:#1f2523'); }
+    if (t === 'nbar') { let s = rect(x, y, w, h, u('gn'), 'stroke="#8a6a1c"'); for (let i = 0; i < Math.floor(w / 8); i++) s += `<circle cx="${x + 4 + i * 8}" cy="${y + h / 2}" r="2" fill="#d9dcd6" stroke="#666"/>`; return s + (lab ? T(cx, y + h / 2 + 20, lab, 'font-size:9px;font-weight:700;fill:#1f2523') : ''); }
     return rect(x, y, w, h, u('gl'), 'rx="2" stroke="#9fa29b"') + lb(lab);
   };
 })(typeof window !== 'undefined' ? window : globalThis);

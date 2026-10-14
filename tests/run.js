@@ -199,6 +199,7 @@ if (PP.BUILD) {
     if (s.total !== 100) bad('参考答案应满分', P.id, JSON.stringify(s));
     if (P.score({}).total !== 0) bad('空白应 0 分', P.id);
     if (!PP.LEVELS.some(L => L.items.some(it => it.t === 'build' && it.id === P.id))) bad('学习路线里没有这套图纸', P.id);
+    P.sel.forEach(it => { if (!(it.opts.length >= 3)) bad('选型题选项太少', P.id, it.k); });
     console.log(`  ${'★'.repeat(P.star).padEnd(5)} ${P.name}：选型 ${P.sel.length}、元件 ${P.parts.length}、规则 ${P.rules.length}、走线 ${P.wires.length}，参考答案 ${s.total} 分`);
   }
 }
@@ -208,6 +209,11 @@ if (PP.BUILD) {
   const len = t => String(t).replace(/<[^>]+>/g, '').length;
   const longest = q => { const m = Math.max(...q[2].map(len)); return len(q[2][q[3]]) === m && q[2].filter(x => len(x) === m).length === 1; };
   const L = PP.QZ.filter(longest).length;
+  // 配柜选型题：推荐答案是唯一最长选项的比例也不能超过 20%
+  const SEL = PP.BUILDS.flatMap(P => P.sel), lenO = o => o[0].length;
+  const SL = SEL.filter(it => { const m = Math.max(...it.opts.map(lenO)); return it.opts.some(o => o[1] === 2 && lenO(o) === m) && it.opts.filter(o => lenO(o) === m).length === 1; }).length;
+  if (SL / SEL.length > 0.2) bad('配柜选型题推荐答案太常是最长的', `${SL}/${SEL.length}`);
+  console.log(`  配柜选型 ${SEL.length} 题，推荐答案是最长选项的 ${SL} 题`);
   if (L / PP.QZ.length > 0.2) bad('正确答案太常是最长的选项', `${L}/${PP.QZ.length}`);
   if (PP.QZ.some(q => !(q[3] >= 0 && q[3] < q[2].length))) bad('题库答案下标越界');
   console.log(`  ${PP.QZ.length} 题，正确答案是最长选项的 ${L} 题`);

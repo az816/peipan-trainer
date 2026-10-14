@@ -753,3 +753,9 @@ dfn.g:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .proj .pst em{font-style:normal;font-family:var(--f-mono);font-weight:700;color:var(--accent-ink)}.proj .pst em.ok{color:var(--ok)}
 .stars{color:#e8a200;letter-spacing:1px;font-size:13px;line-height:1}.stars i{font-style:normal;color:var(--line)}
 .bscene{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;border-left:4px solid var(--accent)}.bscene p{margin:0;flex:1 1 300px}
+/* 配柜考核模式 */
+.exbar{flex:1 1 100%;display:flex;gap:8px 12px;align-items:center;flex-wrap:wrap;margin-top:8px;padding:8px 10px;border-radius:3px;border:1px dashed var(--line);font-size:13.5px}
+.exbar span{flex:1 1 260px;color:var(--muted)}.exbar b{color:var(--ink)}
+.exbar.on{border:1.5px solid var(--tag);background:color-mix(in srgb,var(--tag) 7%,var(--surface))}
+.exbar.done{border:1.5px solid var(--ok);background:color-mix(in srgb,var(--ok) 7%,var(--surface))}
+.selq .opts button.picked{border-color:var(--ink);font-weight:700;box-shadow:inset 3px 0 0 var(--ink)}

@@ -1,4 +1,4 @@
-// pages-build.js — 配柜实战：5 套图纸由易到难，每套都走 看图纸 → 选元件 → 布置 → 走线 → 验收出图
+// pages-build.js — 配柜实战：8 套图纸由易到难，每套都走 看图纸 → 选元件 → 布置 → 走线 → 验收出图
 (function (G) {
   const PP = G.PP, ALL = PP.BUILDS;
   let B = ALL[0];
@@ -40,6 +40,52 @@
     notes.forEach(([x, yy, t]) => (s += NOTE(x, yy === 'm' ? my - 7 : yy === 'm2' ? my + 7 : yy === 'k' ? fy + 12 : yy === 'k2' ? fy + 26 : yy, t)));
     return { s, h: my + 40 };
   }
+  // 单线系统图（配电箱、多回路柜子常用）：一根线代表一个回路，线上斜杠数 = 导线根数
+  function slMain({ inLab, n0 = 5, main, tap, branches, w = 520 }) {
+    const { NOTE, TL } = S();
+    const ln = (x1, y1, x2, y2, cls = 'w') => `<line class="${cls}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+    const slash = (x, y, n) => Array.from({ length: n }, (_, i) => ln(x - 6, y + 4 + i * 5, x + 6, y - 2 + i * 5, 's thin')).join('') + TL(x + 9, y + 6, String(n));
+    const brk = (x, y, lab, rcd) => `<g class="sym" data-dev="${lab.split(' ')[0]}">${ln(x, y, x, y + 10, 's')}<line class="s" x1="${x}" y1="${y + 30}" x2="${x - 12}" y2="${y + 8}"/><path class="s" style="stroke-width:1.6" d="M${x - 3} ${y + 7}l6 6M${x + 3} ${y + 7}l-6 6"/>${ln(x, y + 30, x, y + 40, 's')}${rcd ? `<ellipse class="s thin" cx="${x}" cy="${y + 48}" rx="9" ry="4"/>` : ''}<text class="sl" x="${x + 10}" y="${y + 24}" style="font-size:11px">${lab}</text></g>`;
+    const km = (x, y, lab) => `<g class="sym" data-dev="${lab}">${ln(x, y, x, y + 10, 's')}<line class="s" x1="${x}" y1="${y + 30}" x2="${x - 12}" y2="${y + 8}"/><path class="s thin" d="M${x - 5} ${y + 10}a5 5 0 0 1 10 0"/>${ln(x, y + 30, x, y + 40, 's')}<text class="sl" x="${x + 10}" y="${y + 24}" style="font-size:11px">${lab}</text></g>`;
+    const box = (x, y, lab) => `<g class="sym" data-dev="${lab}"><rect class="s fill" x="${x - 26}" y="${y}" width="52" height="28"/><text class="tl" x="${x}" y="${y + 18}" text-anchor="middle" style="fill:var(--ink);font-weight:700">${lab}</text></g>`;
+    const mot = (x, y, lab) => `<g class="sym" data-dev="M"><circle class="s fill" cx="${x}" cy="${y + 15}" r="15"/><text class="mt" x="${x}" y="${y + 20}" style="font-size:12px">${lab || 'M'}</text></g>`;
+    let s = NOTE(60, 14, inLab, 'start') + ln(60, 20, 60, 60) + slash(60, 34, n0) + brk(60, 60, main);
+    let y = 100;
+    if (tap) s += ln(60, y + 6, 100, y + 6) + `<circle class="jd" cx="60" cy="${y + 6}" r="3"/>` + NOTE(104, y + 10, tap, 'start');
+    const bx = branches.map((_, i) => 140 + i * ((w - 260) / Math.max(1, branches.length - 1)));
+    s += ln(60, y, 60, 130) + `<line class="w" style="stroke-width:5" x1="60" y1="130" x2="${bx[bx.length - 1] + 10}" y2="130"/>` + NOTE(26, 134, '母线', 'start');
+    branches.forEach((b, i) => {
+      const x = bx[i]; let yy = 130;
+      s += ln(x, yy, x, yy + 16) + slash(x, yy + 4, b.n || 3); yy += 16;
+      for (const [k, lab] of b.items) {
+        if (k === 'qf' || k === 'rcd') { s += brk(x, yy, lab, k === 'rcd'); yy += k === 'rcd' ? 56 : 40; }
+        else if (k === 'km') { s += km(x, yy, lab); yy += 40; }
+        else if (k === 'box') { s += ln(x, yy, x, yy + 8) + box(x, yy + 8, lab); yy += 36; }
+        else if (k === 'm') { s += ln(x, yy, x, yy + 10) + mot(x, yy + 10, lab); yy += 40; }
+        else if (k === 'out') { s += ln(x, yy, x, yy + 14) + `<path class="s" d="M${x - 4} ${yy + 8}L${x} ${yy + 16}L${x + 4} ${yy + 8}"/>`; yy += 18; }
+      }
+      b.foot.forEach((t, j) => (s += NOTE(x, yy + 16 + j * 14, t)));
+    });
+    const h = 130 + Math.max(...branches.map(b => b.items.reduce((a, [k]) => a + (k === 'rcd' ? 56 : k === 'box' ? 36 : k === 'out' ? 18 : 40), 16) + b.foot.length * 14 + 24));
+    return { s, h, w };
+  }
+  // 设备柜主回路：QF0 → KM1（安全接触器）→ QM1（电动机保护断路器）→ KM2 → M1；QF0 下口分出控制电源和插座
+  function machineMain() {
+    const { W, DOT, SRC, NOTE, triple, motor } = S(), xs = [50, 80, 110];
+    let s = '';
+    xs.forEach((x, i) => (s += SRC(x, 16, ph[i]) + W(ph[i], [[x, 24], [x, 40]])));
+    s += triple(xs, 40, 'qf', 'QF0');
+    xs.forEach((x, i) => (s += W('a' + i, [[x, 80], [x, 120]])));
+    s += W('a0', [[50, 92], [190, 92]]) + DOT('a0', 50, 92) + NOTE(196, 96, '→ QF2 控制电源 AC220V', 'start');
+    s += W('a2', [[110, 104], [190, 104]]) + DOT('a2', 110, 104) + NOTE(196, 110, '→ QF3 漏保 30mA → 插座', 'start');
+    s += triple(xs, 120, 'km', 'KM1') + NOTE(196, 146, 'KM1 安全接触器：拍急停断开', 'start');
+    xs.forEach((x, i) => (s += W('b' + i, [[x, 160], [x, 180]])));
+    s += triple(xs, 180, 'qf', 'QM1') + NOTE(196, 200, 'QM1 电动机保护断路器', 'start') + NOTE(196, 214, '（管短路 + 过载）', 'start');
+    xs.forEach((x, i) => (s += W('c' + i, [[x, 220], [x, 240]])));
+    s += triple(xs, 240, 'km', 'KM2') + NOTE(196, 266, 'KM2 线圈 DC24V，PLC Q0.0 控制', 'start');
+    s += W('U', [[50, 280], [50, 300], [64, 316]]) + W('V', [[80, 280], [80, 310]]) + W('W', [[110, 280], [110, 300], [96, 316]]) + motor(80, 334, 24) + NOTE(196, 338, 'M1 输送 0.75kW', 'start');
+    return { s, h: 372, w: 420 };
+  }
   const MAINS = {
     pump: () => simpleMain({ notes: [[210, 'm', 'M1 1.5kW'], [210, 'm2', '380V 直接启动'], [210, 'k', '控制回路见第 2 张图'], [210, 'k2', '（启保停）']] }),
     hoist: () => simpleMain({ rev: true, notes: [[232, 'k', 'KM2 对调 L1、L3'], [232, 'k2', '→ 电机反转'], [250, 'm', 'M1 1.1kW'], [250, 'm2', '上升 / 下降']] }),
@@ -58,7 +104,7 @@
       s += triple(xy, 254, 'km', 'KM2') + W('n', [[300, 294], [300, 304], [360, 304], [360, 294]]) + W('n', [[330, 294], [330, 304]]) + DOT('n', 330, 304);
       s += `<g class="sym" data-dev="M"><rect class="s fill" x="34" y="300" width="232" height="44" rx="6"/><text class="mt" x="150" y="320">M 3~</text><text class="tl" x="150" y="336" text-anchor="middle">11kW 380V △ · 接线盒不装连接片</text></g>`;
       s += NOTE(330, 330, 'KM2（Y）下口短接') + NOTE(330, 344, '= 星点') + NOTE(330, 150, 'KM3（Δ）接 U1–W2') + NOTE(330, 164, 'V1–U2  W1–V2');
-      return { s, h: 360 };
+      return { s, h: 360, w: 420 };
     },
     vfd: () => {
       const { W, SRC, NOTE, triple, motor, box } = S(), xs = [50, 80, 110];
@@ -69,6 +115,16 @@
       s += motor(80, 262, 24) + NOTE(210, 132, '7.5kW 水泵') + NOTE(210, 146, '变频调速') + NOTE(210, 200, '输出到电机：') + NOTE(210, 214, '屏蔽电缆，不加接触器') + NOTE(210, 256, '启停：KA → DI1') + NOTE(210, 270, '压力：4–20mA → AI');
       return { s, h: 300 };
     },
+    dist: () => slMain({ inLab: '进线 BV-5×10（L1 L2 L3 N PE）', n0: 5, main: 'QF0 4P 40A', tap: 'FU → 电源指示灯；TA 50/5 → 电流表', w: 640, branches: [
+      { n: 3, items: [['qf', 'QF1 3P 20A'], ['out']], foot: ['WP1', 'BV-4×2.5', '1# 机床 5.5kW'] },
+      { n: 3, items: [['qf', 'QF2 3P 10A'], ['out']], foot: ['WP2', 'BV-4×1.5', '2# 空压机 3kW'] },
+      { n: 2, items: [['qf', 'QF3 1P+N 10A'], ['out']], foot: ['WL1（取 L1）', 'BV-3×1.5', '照明 1.5kW'] },
+      { n: 2, items: [['rcd', 'QF4 漏保 30mA'], ['out']], foot: ['WX1（取 L3）', 'BV-3×2.5', '检修插座 16A'] }] }),
+    machine: machineMain,
+    line: () => slMain({ inLab: '进线 3×6mm² + PE', n0: 4, main: 'QF0 3P 32A', tap: 'QF3 → 24V 电源、PLC、交换机', w: 600, branches: [
+      { n: 3, items: [['qf', 'QF1 3P 16A'], ['box', 'VFD'], ['m', 'M1']], foot: ['输送 3kW 变频', '屏蔽电缆'] },
+      { n: 2, items: [['qf', 'QF2 2P 10A'], ['box', '伺服驱动'], ['m', 'SV']], foot: ['举升伺服 0.75kW', '厂家成套电缆'] },
+      { n: 3, items: [['qf', 'QM1 2.5–4A'], ['km', 'KM1'], ['m', 'M2']], foot: ['排风 1.5kW'] }] }),
   };
   // 第 2 张图：控制回路（借用接线实训里对应那道题的原理图）
   function ctrlSheet() {
@@ -122,49 +178,54 @@
   const scoreOf = id => { const p = PP.buildOf(id), s = all.p[id]; return s && s.seen && s.seen[4] ? p.score(s).total : null; };
   function mount(el) {
     el.innerHTML = `<div class="page">
-  <div class="page-head"><h1>配柜实战</h1><p>对照图纸，自己做一台控制柜：先看懂图纸和任务书，再选元件、把元件装上导轨、决定每根线用多粗、什么颜色、走哪条线槽，最后验收出图。5 套图纸从简单到难，建议按顺序做。</p></div>
+  <div class="page-head"><h1>配柜实战</h1><p>对照图纸，自己做一台控制柜：先看懂图纸和任务书，再选元件、把元件装上导轨、决定每根线用多粗、什么颜色、走哪条线槽，最后验收出图。8 套图纸从简单到难，建议按顺序做；每套练熟了，再开「考核模式」不看提示做一遍。</p></div>
   <div class="projs" id="bproj"></div>
   <ol class="steps" id="bst"></ol>
   <div id="bv"></div>
 </div>`;
     const $ = id => el.querySelector('#' + id);
     const placed = () => B.parts.every(p => st.layout.some(r => r.includes(p.k)));
+    // 考核模式：作答时不给对错反馈，交卷才评分
+    const EXM = () => !!(st.exam && !st.exam.done);
+    const mmss = sec => `${Math.floor(sec / 60)} 分 ${String(Math.round(sec % 60)).padStart(2, '0')} 秒`;
     const done = i => [!!st.seen[0], B.sel.every(it => st.sel[it.k] != null), placed(), B.wires.every(w => { const v = st.wires[w.k] || {}; return v.sec && v.col && v.duct !== undefined && v.duct !== ''; }), !!st.seen[4]][i];
     function drawProj() {
-      $('bproj').innerHTML = ALL.map(p => { const sc = scoreOf(p.id), s = all.p[p.id]; return `<button class="proj${p.id === B.id ? ' on' : ''}" data-proj="${p.id}" aria-pressed="${p.id === B.id}">${stars(p.star)}<b>${p.name}</b><small>${p.scene.split('。')[0]}</small><span class="pst">${sc != null ? `<em class="${sc >= 70 ? 'ok' : ''}">${sc} 分</em>` : s && Object.keys(s.seen || {}).length ? '做到一半' : '未开始'}</span></button>`; }).join('');
+      $('bproj').innerHTML = ALL.map(p => { const sc = scoreOf(p.id), s = all.p[p.id]; return `<button class="proj${p.id === B.id ? ' on' : ''}" data-proj="${p.id}" aria-pressed="${p.id === B.id}">${stars(p.star)}<b>${p.name}</b><small>${p.scene.split('。')[0]}</small><span class="pst">${s && s.exam && !s.exam.done ? '考核中' : sc != null ? `<em class="${sc >= 70 ? 'ok' : ''}">${sc} 分</em>` : s && Object.keys(s.seen || {}).length ? '做到一半' : '未开始'}${s && s.best ? ` · 考核 <em class="${s.best >= 70 ? 'ok' : ''}">${s.best}</em>` : ''}</span></button>`; }).join('');
     }
     function drawStages() { $('bst').innerHTML = STAGES.map(([t, d], i) => `<li class="${i === st.stage ? 'cur' : done(i) ? 'done' : ''}"><button data-st="${i}"><span class="no">${done(i) && i !== st.stage ? '✓' : i + 1}</span><span><b>${t}</b><small>${d}</small></span></button></li>`).join(''); }
     const next = (t = '下一步') => st.stage < 4 ? `<div class="tools"><button class="b primary" data-st="${st.stage + 1}">${t}：${STAGES[st.stage + 1][0]} →</button></div>` : '';
 
     function vDraw() {
-      const m = MAINS[B.id](), F = PP.frame({ name: B.name + ' 主回路', no: B.no, page: B.ctrlEx ? '1/2' : '1/1', vb: `0 0 ${B.id === 'yd' ? 420 : 320} ${m.h}`, sch: () => m.s }, 29);
+      const m = MAINS[B.id](), F = PP.frame({ name: B.name + (B.id === 'dist' || B.id === 'line' ? ' 系统图' : ' 主回路'), no: B.no, page: B.ctrlEx ? '1/2' : '1/1', vb: `0 0 ${m.w || 320} ${m.h}`, sch: () => m.s }, 29);
       const ioCard = B.io ? `<section class="card"><h2>PLC I/O 分配表</h2><div class="tblwrap"><table><tr><th>地址</th><th>元件</th><th>说明</th></tr>${B.io.map(r => `<tr><td class="mono">${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</table></div><p class="cap">${B.ctrlNote}</p></section>` : `<section class="card"><h2>控制回路</h2><p>${B.ctrlNote}</p></section>`;
-      return `<section class="card bscene">${stars(B.star)}<p><b>${B.name}</b>　${B.scene}</p></section>
-        <div class="cols2"><div style="display:flex;flex-direction:column;gap:14px"><section class="card"><h2>主回路原理图<span>图号 ${B.no} · 第 1 张</span></h2><div class="svgwrap"><svg class="sch" viewBox="${F.vb}" style="max-width:520px;margin:auto">${F.svg}</svg></div></section>${ctrlSheet()}</div>
+      const tables = (B.tables || []).map(t => `<section class="card"><h2>${t.title}</h2><div class="tblwrap"><table><tr>${t.head.map(h => `<th>${h}</th>`).join('')}</tr>${t.rows.map(r => `<tr>${r.map((c, i) => `<td${i ? '' : ' class="mono"'}>${c}</td>`).join('')}</tr>`).join('')}</table></div>${t.note ? `<p class="cap">${t.note}</p>` : ''}</section>`).join('');
+      const ex = st.exam, exBar = !ex ? `<div class="exbar"><span><b>考核模式</b>：不看对错提示、没有参考布置，全部做完交卷才出分。会清空这套现在的作答。</span><button class="b small" data-exam="start">开始考核</button></div>` : !ex.done ? `<div class="exbar on"><span><b>考核中</b>：选元件、布置、走线都不提示对错，做完到「验收出图」交卷。</span><button class="b small ghost" data-exam="quit">退出考核</button></div>` : `<div class="exbar done"><span><b>考核成绩 ${ex.sc} 分</b>，用时 ${mmss(ex.sec)}${st.best ? `（最好 ${st.best} 分）` : ''}。现在每一步都能看到对错和原因。</span><button class="b small" data-exam="start">再考一次</button></div>`;
+      return `<section class="card bscene">${stars(B.star)}<p><b>${B.name}</b>　${B.scene}</p>${exBar}</section>
+        <div class="cols2"><div style="display:flex;flex-direction:column;gap:14px"><section class="card"><h2>${m.w && B.id !== 'yd' && B.id !== 'machine' ? '配电系统图' : '主回路原理图'}<span>图号 ${B.no} · 第 1 张</span></h2><div class="svgwrap"><svg class="sch" viewBox="${F.vb}" style="max-width:${m.w && m.w > 440 ? m.w + 40 : 520}px;margin:auto">${F.svg}</svg></div></section>${ctrlSheet()}</div>
         <div style="display:flex;flex-direction:column;gap:14px"><section class="card"><h2>任务书</h2><div class="tblwrap"><table>${B.task.map(r => `<tr><th style="white-space:nowrap">${r[0]}</th><td>${r[1]}</td></tr>`).join('')}</table></div></section>
-        ${ioCard}${next('看懂了')}</div></div>`;
+        ${ioCard}${tables}${next('看懂了')}</div></div>`;
     }
     function vSel() {
       const n = B.sel.filter(it => st.sel[it.k] != null).length;
-      return `<section class="card"><h2>选元件<span>已选 ${n} / ${B.sel.length} · 每项选一个，马上告诉你选得对不对</span></h2><div class="selgrid">${B.sel.map(it => {
+      return `<section class="card"><h2>选元件<span>已选 ${n} / ${B.sel.length} · ${EXM() ? '考核中：选了不提示对错，交卷后统一评分' : '每项选一个，马上告诉你选得对不对'}</span></h2><div class="selgrid">${B.sel.map(it => {
         const i = st.sel[it.k], o = i == null ? null : it.opts[i];
-        return `<div class="selq"><h3>${it.name}</h3><p class="cap">${it.hint}</p><div class="opts">${ordOf(it).map(j => { const op = it.opts[j]; return `<button data-sk="${it.k}" data-si="${j}" aria-pressed="${i === j}" class="${i === j ? ['wrong', 'meh', 'right'][op[1]] : ''}">${op[0]}</button>`; }).join('')}</div>${o ? `<p class="why"><span class="tag ${['bad', 'miss', 'ok'][o[1]]}">${['选错了', '能用但不推荐', '推荐'][o[1]]}</span> ${o[2]}</p>` : ''}</div>`;
+        return `<div class="selq"><h3>${it.name}</h3><p class="cap">${it.hint}</p><div class="opts">${ordOf(it).map(j => { const op = it.opts[j]; return `<button data-sk="${it.k}" data-si="${j}" aria-pressed="${i === j}" class="${i === j ? (EXM() ? 'picked' : ['wrong', 'meh', 'right'][op[1]]) : ''}">${op[0]}</button>`; }).join('')}</div>${o && !EXM() ? `<p class="why"><span class="tag ${['bad', 'miss', 'ok'][o[1]]}">${['选错了', '能用但不推荐', '推荐'][o[1]]}</span> ${o[2]}</p>` : ''}</div>`;
       }).join('')}</div>${next()}</section>`;
     }
     function vLay() {
-      const left = B.parts.filter(p => !st.layout.some(r => r.includes(p.k))), res = showL ? B.gradeLayout(st.layout) : null;
+      const left = B.parts.filter(p => !st.layout.some(r => r.includes(p.k))), res = showL && !EXM() ? B.gradeLayout(st.layout) : null;
       return `<div class="cols2"><section class="card"><h2>柜内安装板<span>先点右边托盘里的元件，再点要装的那一排导轨；点已装的元件可以拆回托盘</span></h2>
         <div class="svgwrap"><svg id="bcab" class="cab" viewBox="0 0 420 486" style="max-width:520px;margin:auto">${cabSVG(st.layout)}</svg></div>
         <div class="legend"><span><i style="background:#c98a5a"></i>${B.DUCT[0]}</span><span><i style="background:#6f8fc4"></i>${B.DUCT[1]}</span><span><i style="background:#9aa3a0"></i>横向线槽</span></div></section>
         <section class="card"><h2>元件托盘<span>${left.length ? `还有 ${left.length} 个没装` : '全部装好了'} · 每排 ${B.CAP} 格</span></h2>
         <div class="tray">${left.map(p => `<button class="bp-btn ${p.cls}" data-pick="${p.k}" aria-pressed="${pick === p.k}"><b>${p.lab}</b><small>${p.sub} · ${p.u} 格</small></button>`).join('') || '<p class="cap">点「检查布置」看看排得对不对。</p>'}</div>
         ${pick ? `<div class="tools"><span class="cap">把 <b>${B.part(pick).lab}</b> 装到：</span>${Array.from({ length: B.rows }, (_, r) => `<button class="b small" data-row="${r}">${RN(r)}</button>`).join('')}</div>` : ''}
-        <div class="tools"><button class="b primary" id="lchk">检查布置</button><button class="b ghost" id="lans">看参考布置</button><button class="b ghost danger" id="lclr">全部拆下</button></div>
+        <div class="tools">${EXM() ? '<span class="cap">考核中：没有检查和参考布置，自己按规则排。</span>' : '<button class="b primary" id="lchk">检查布置</button><button class="b ghost" id="lans">看参考布置</button>'}<button class="b ghost danger" id="lclr">全部拆下</button></div>
         ${res ? `<ul class="rulelist">${res.map(r => `<li class="${r.ok ? 'ok' : 'no'}"><b>${r.ok ? '✓' : '✗'} ${r.name}</b>${r.ok ? '' : `<br><span class="cap">${r.why}</span>`}</li>`).join('')}</ul>` : `<p class="cap">布置原则：电从上往下、从左往右；强电、弱电分开；端子排放最下面靠近进线。</p>`}
         ${next()}</section></div>`;
     }
     function vWire() {
-      const lay = placed() ? st.layout : B.answer, res = showW ? B.gradeWires(st.wires) : null;
+      const lay = placed() ? st.layout : EXM() ? st.layout : B.answer, res = showW && !EXM() ? B.gradeWires(st.wires) : null;
       const marks = res ? Object.fromEntries(res.map(r => [r.k, r.n === 3])) : null;
       const sel = (k, f, opts, v) => `<select data-wk="${k}" data-wf="${f}" aria-label="${f === 'sec' ? '截面' : f === 'col' ? '颜色' : '线槽'}"><option value="">—</option>${opts.map((o, i) => { const val = f === 'duct' ? i : o; return `<option value="${val}"${String(v) === String(val) ? ' selected' : ''}>${f === 'sec' ? o + ' mm²' : o}</option>`; }).join('')}</select>`;
       const colHead = B.COL.some(c => c.includes('屏蔽')) ? '颜色 / 线型' : '颜色';
@@ -175,9 +236,13 @@
           const v = st.wires[w.k] || {}, r = res && res.find(x => x.k === w.k), m = ok => (r ? (ok ? ' ok' : ' no') : '');
           return `<tr><td>${w.name}${r && r.n < 3 ? `<div class="cap">${w.why}</div>` : ''}</td><td class="${m(r && r.okS)}">${sel(w.k, 'sec', B.SEC, v.sec)}</td><td class="${m(r && r.okC)}">${sel(w.k, 'col', B.COL, v.col)}</td><td class="${m(r && r.okD)}">${sel(w.k, 'duct', B.DUCT, v.duct)}</td></tr>`;
         }).join('')}</table></div>
-        <div class="tools"><button class="b primary" id="wchk">检查走线</button>${res ? `<span class="cap">对了 ${res.reduce((a, r) => a + r.n, 0)} / ${res.length * 3} 项${res.every(r => r.n === 3) ? '，全对！' : '，红色格子要改，下面写了原因'}</span>` : ''}</div>${next()}</section></div>`;
+        <div class="tools">${EXM() ? '<span class="cap">考核中：不提示对错。</span>' : '<button class="b primary" id="wchk">检查走线</button>'}${res ? `<span class="cap">对了 ${res.reduce((a, r) => a + r.n, 0)} / ${res.length * 3} 项${res.every(r => r.n === 3) ? '，全对！' : '，红色格子要改，下面写了原因'}</span>` : ''}</div>${next()}</section></div>`;
     }
     function vDone() {
+      if (EXM()) {
+        const left = [['选元件', B.sel.filter(it => st.sel[it.k] == null).length], ['布置', B.parts.filter(p => !st.layout.some(r => r.includes(p.k))).length], ['走线', B.wires.filter(w => { const v = st.wires[w.k] || {}; return !(v.sec && v.col && v.duct !== undefined && v.duct !== ''); }).length]].filter(x => x[1]);
+        return `<section class="card"><h2>交卷<span>考核模式</span></h2>${left.length ? `<p>还有没做完的：${left.map(([k, n]) => `${k} ${n} 项`).join('、')}。没做的按 0 分算。</p>` : '<p>都做完了，确认交卷后给出成绩，每一步也会显示对错。</p>'}<div class="tools"><button class="b primary" data-exam="submit">交卷</button></div></section>`;
+      }
       const sc = B.score(st), s = B.gradeSel(st.sel), lay = placed() ? st.layout : null, nx = ALL[ALL.indexOf(B) + 1];
       const card = (k, v, d) => `<div class="r"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${d}</div></div>`;
       const lv = sc.total >= 90 ? '优秀：这台柜子可以交给师傅验收了' : sc.total >= 70 ? '合格：还有几处要改，回到对应步骤看红色提示' : '还要再练：按步骤一项项改';
@@ -206,6 +271,13 @@
       const t = e.target.closest('[data-st],[data-sk],[data-pick],[data-row],[data-placed],[data-proj],button');
       if (!t) return;
       if (t.dataset.proj) { useProj(t.dataset.proj); draw(); el.scrollIntoView({ behavior: 'smooth' }); return; }
+      if (t.dataset.exam) {
+        const a = t.dataset.exam;
+        if (a === 'start') { const best = st.best; st = all.p[B.id] = blank(); st.best = best; st.exam = { t0: Date.now(), done: false }; showW = showL = false; pick = null; }
+        if (a === 'quit') st.exam = null;
+        if (a === 'submit') { const sc = B.score(st).total; st.exam.done = true; st.exam.sc = sc; st.exam.sec = (Date.now() - st.exam.t0) / 1000; st.best = Math.max(st.best || 0, sc); showW = showL = true; }
+        draw(); return;
+      }
       if (t.dataset.st !== undefined) { st.stage = +t.dataset.st; pick = null; draw(); el.scrollIntoView({ behavior: 'smooth' }); return; }
       if (t.dataset.sk) { st.sel[t.dataset.sk] = +t.dataset.si; draw(); return; }
       if (t.dataset.pick) { pick = pick === t.dataset.pick ? null : t.dataset.pick; draw(); return; }
@@ -216,7 +288,7 @@
       if (t.id === 'lclr') { st.layout = Array.from({ length: B.rows }, () => []); pick = null; showL = false; draw(); }
       if (t.id === 'wchk') { showW = true; draw(); }
       if (t.id === 'bprint') window.print();
-      if (t.id === 'breset') { st = all.p[B.id] = blank(); pick = null; showW = showL = false; draw(); }
+      if (t.id === 'breset') { const best = st.best; st = all.p[B.id] = blank(); st.best = best; pick = null; showW = showL = false; draw(); }
     });
     el.addEventListener('change', e => {
       const s = e.target.closest('[data-wk]'); if (!s) return;

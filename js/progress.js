@@ -18,17 +18,17 @@
     { id: 'L3', title: '继电控制入门', goal: '看懂并接出点动、自锁、两地控制、指示灯，送电试车一次通过。', real: '板前明线、线槽配线练习',
       items: [ex('jog'), ex('hold'), ex('twoloc'), ex('lamp'), lesson('relay', '中间继电器认脚'), { t: 'build', id: 'pump', name: '配柜 ★ 水泵启停控制箱' }] },
     { id: 'L4', title: '主回路与互锁', goal: '三相主回路不串相，正反转一定要互锁，会接顺序和星三角。', real: '电工中级实操常考题',
-      items: [ex('main'), lesson('motorbox', '电机接线盒：星形 / 三角形'), ex('fwdrev'), { t: 'build', id: 'hoist', name: '配柜 ★★ 提升机正反转箱' }, ex('seq'), ex('delay'), ex('yd'), { t: 'build', id: 'yd', name: '配柜 ★★★★ 风机星三角柜' }] },
+      items: [ex('main'), lesson('motorbox', '电机接线盒：星形 / 三角形'), ex('fwdrev'), { t: 'build', id: 'hoist', name: '配柜 ★★ 提升机正反转箱' }, ex('seq'), ex('delay'), ex('yd'), { t: 'build', id: 'yd', name: '配柜 ★★★ 风机星三角柜' }] },
     { id: 'L5', title: '传感器与 PLC 接线', goal: '分清 NPN / PNP，公共端接对，PLC 输入输出、电磁阀和急停都能接。', real: '自动化设备每天的活',
-      groups: [['PLC 输入输出', 5], ['传感器', 4], ['电磁阀与气缸', 3], ['安全回路', 3], ['运动控制', 2]],
-      items: [ex('plclamp'), ex('relay'), ex('combo'), ex('plcfr'), page('plc', 'PLC 故障灯测验'), ex('npn'), ex('pnp'), ex('two'), ex('analog'), ex('cyl'), ex('diode'), ex('valveisl'), ex('estop'), ex('srelay'), ex('lcurtain'), ex('stepper'), ex('servo')] },
+      groups: [['PLC 输入输出', 5], ['传感器', 4], ['电磁阀与气缸', 3], ['安全回路', 3], ['运动控制', 2], ['整柜练习', 1]],
+      items: [ex('plclamp'), ex('relay'), ex('combo'), ex('plcfr'), page('plc', 'PLC 故障灯测验'), ex('npn'), ex('pnp'), ex('two'), ex('analog'), ex('cyl'), ex('diode'), ex('valveisl'), ex('estop'), ex('srelay'), ex('lcurtain'), ex('stepper'), ex('servo'), { t: 'build', id: 'conveyor', name: '配柜 ★★★ 输送线 PLC 柜' }] },
     { id: 'L6', title: '配盘工艺', goal: '端子选对、压牢，线号朝向一致，横平竖直，强弱电分开。', real: '师傅验收先看工艺',
-      items: [lesson('craft', '剥线 压端子 套线号'), lesson('ground', 'PE、0V 和屏蔽线'), page('cab', '柜体布局 + 小测')] },
+      items: [lesson('craft', '剥线 压端子 套线号'), lesson('ground', 'PE、0V 和屏蔽线'), page('cab', '柜体布局 + 小测'), { t: 'build', id: 'dist', name: '配柜 ★★ 车间动力配电箱' }] },
     { id: 'L7', title: '故障排查', goal: '会按“看现象 → 缩小范围 → 量 → 确认”的顺序，用万用表找出故障点。', real: '调试、维修',
       groups: [['方法', 1], ['实战排故', 7]],
       items: [lesson('trouble', '排故方法：电压法和电阻法'), ex('f1'), ex('f2'), ex('f3'), ex('f4'), ex('f5'), ex('f6'), ex('f7')] },
     { id: 'L8', title: '整柜实战', goal: '对照图纸，从选元件、布置、走线到验收，独立做完一台控制柜。', real: '独立配一台柜子',
-      items: [lesson('sheets', '看懂多页图纸'), { t: 'build', id: 'conveyor', name: '配柜 ★★★ 输送线 PLC 柜' }, { t: 'build', id: 'vfd', name: '配柜 ★★★★★ 恒压供水变频柜' }, lesson('iocheck', '送电对点：I/O 点检'), page('calc', '选型计算 + 小测')] },
+      items: [lesson('sheets', '看懂多页图纸'), { t: 'build', id: 'machine', name: '配柜 ★★★★ 自动化设备控制柜' }, { t: 'build', id: 'vfd', name: '配柜 ★★★★ 恒压供水变频柜' }, { t: 'build', id: 'line', name: '配柜 ★★★★★ 装配线综合柜（毕业设计）' }, lesson('iocheck', '送电对点：I/O 点检'), page('calc', '选型计算 + 小测')] },
   ];
 
   // 每道接线题的学习阶段：读图题 → 看演示 → 跟着接 → 独立接 → 考核
