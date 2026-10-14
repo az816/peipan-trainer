@@ -2,7 +2,9 @@
 
 **给装配电工新手的看图接线练习台**：在浏览器里对着电气图纸接线、校线、送电试车、找故障，元器件按实物画，一眼能和现场对上。
 
-**在线使用：https://az816.github.io/peipan-trainer/**　也可以下载后双击 `index.html`，手机、平板、电脑都能练。
+**在线使用：[az816.github.io/peipan-trainer](https://az816.github.io/peipan-trainer/)**
+
+也可以下载后双击 `index.html`，手机、平板、电脑都能练。
 
 > 本软件只用于学习看图和接线思路。真实接线必须断电、验电、挂牌，遵守安全规程，在有资格的人员指导下进行。
 
@@ -42,7 +44,7 @@
 
 - 下载或克隆本仓库，直接双击 `index.html`（联网时加载字体更好看，不联网也能用）。
 - 或者在本目录运行 `python -m http.server 8765`，浏览器打开 http://127.0.0.1:8765
-- 在线版：https://az816.github.io/peipan-trainer/ （GitHub Pages，推送到 `main` 后几分钟自动更新）
+- 在线版：[az816.github.io/peipan-trainer](https://az816.github.io/peipan-trainer/)（GitHub Pages，推送到 `main` 后几分钟自动更新）
 
 ## 技术说明
 
