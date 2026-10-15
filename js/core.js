@@ -285,15 +285,25 @@
       const missing = rows.filter(x => x.left > 0);
       return { wrong, missing, rows, ok: !wrong.length && !missing.length, f };
     }
-    whyWrong(a, b) {
+    whyWrong(a, b) { return this.diagnose(a, b).msg; }
+    // 结构化的接线判断：code 给程序用，msg 给人看，fix 是“应该接到哪”
+    //   DUP 已经接过 / TERM_FULL 端子满了（这两个是接之前查的，pre=true 才查）
+    //   FIELD_BYPASS_X1 现场设备没经过端子排 / UNUSED_TERM 本题不用的端子 / NET_MISMATCH 线号不同 / '' 正确
+    diagnose(a, b, pre = false) {
+      if (pre) {
+        if (this.wires.some(w => (w[0] === a && w[1] === b) || (w[0] === b && w[1] === a))) return { code: 'DUP', msg: '这两个端子已经接过了。' };
+        const full = [a, b].find(x => this.wires.filter(w => w[0] === x || w[1] === x).length >= 2);
+        if (full) return { code: 'TERM_FULL', term: full, msg: `${PP.tplain(full)} 上已经有两根线。标准要求一个端子只接一根，端子允许时最多两根；再多就换到同一线号的另一个端子上接。` };
+      }
       const na = this.nm[a], nb = this.nm[b], pa = PP.termPos(a), pb = PP.termPos(b);
+      const fix = t => { const n = this.nm[t]; return n ? n.terms.filter(x => x !== t) : []; };
       if (this.has('X1')) {
         const fa = FIELD_KINDS.has(DEV[pa.dev].kind), fb = FIELD_KINDS.has(DEV[pb.dev].kind);
-        if ((fa && pb.dev !== 'X1' && !fb) || (fb && pa.dev !== 'X1' && !fa)) return '现场设备的线不能直接进柜内设备，要先接到端子排 X1 的下口。';
+        if ((fa && pb.dev !== 'X1' && !fb) || (fb && pa.dev !== 'X1' && !fa)) return { code: 'FIELD_BYPASS_X1', msg: '现场设备的线不能直接进柜内设备，要先接到端子排 X1 的下口。', fix: fix(a) };
       }
-      if (!na || !nb) return `${!na ? PP.tplain(a) : PP.tplain(b)} 在本练习里不用接线。`;
-      if (na === nb) return '';
-      return `一头是线号 ${PP.nlab(na)}，另一头是线号 ${PP.nlab(nb)}，线号不同不能连。`;
+      if (!na || !nb) { const t = !na ? a : b; return { code: 'UNUSED_TERM', term: t, msg: `${PP.tplain(t)} 在本练习里不用接线。`, fix: fix(t === a ? b : a) }; }
+      if (na === nb) return { code: '', msg: '' };
+      return { code: 'NET_MISMATCH', msg: `一头是线号 ${PP.nlab(na)}，另一头是线号 ${PP.nlab(nb)}，线号不同不能连。`, fix: fix(a) };
     }
 
     // 万用表：断电量通断/电阻，带电量电压

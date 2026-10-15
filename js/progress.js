@@ -1,4 +1,4 @@
-// progress.js — 学习路线（9 关）和学习进度。只读写 localStorage，不碰 DOM，测试可直接加载。
+// progress.js — 学习路线（8 关）和学习进度。只读写 localStorage，不碰 DOM，测试可直接加载。
 (function (G) {
   const PP = G.PP;
   const store = (PP.store = {
@@ -6,7 +6,7 @@
     set(k, v) { try { G.localStorage && G.localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } },
   });
 
-  // 每一关：学什么、练什么、过关标准
+  // 每一关：学什么、练什么、过关标准。新手路线 8 关，由易到难：点动 → 自锁 → 两地 → 正反转 → 星三角
   const ex = id => ({ t: 'ex', id }), lesson = (id, name) => ({ t: 'lesson', id, name }), page = (id, name) => ({ t: 'page', id, name });
   PP.LEVELS = [
     { id: 'L0', title: '安全与电路基础', goal: '知道电从哪来、往哪去，什么是回路、短路、断路；记住断电、验电、挂牌。', real: '第一天进车间就要用',
@@ -15,20 +15,16 @@
       items: [lesson('parts', '符号 ↔ 实物 ↔ 端子'), page('read', '看图四步 + 识图小测')] },
     { id: 'L2', title: '万用表', goal: '会选档位，会量通断和电压，知道量之前先确认档位。', real: '买一块表，天天量',
       items: [lesson('meter', '万用表怎么用')] },
-    { id: 'L3', title: '继电控制入门', goal: '看懂并接出点动、自锁、两地控制、指示灯，送电试车一次通过。', real: '板前明线、线槽配线练习',
-      items: [ex('jog'), ex('hold'), ex('twoloc'), ex('lamp'), lesson('relay', '中间继电器认脚'), { t: 'build', id: 'pump', name: '配柜 ★ 水泵启停控制箱' }] },
-    { id: 'L4', title: '主回路与互锁', goal: '三相主回路不串相，正反转一定要互锁，会接顺序和星三角。', real: '电工中级实操常考题',
-      items: [ex('main'), lesson('motorbox', '电机接线盒：星形 / 三角形'), ex('fwdrev'), { t: 'build', id: 'hoist', name: '配柜 ★★ 提升机正反转箱' }, ex('seq'), ex('delay'), ex('yd'), { t: 'build', id: 'yd', name: '配柜 ★★★ 风机星三角柜' }] },
-    { id: 'L5', title: '传感器与 PLC 接线', goal: '分清 NPN / PNP，公共端接对，PLC 输入输出、电磁阀和急停都能接。', real: '自动化设备每天的活',
-      groups: [['PLC 输入输出', 5], ['传感器', 4], ['电磁阀与气缸', 3], ['安全回路', 3], ['运动控制', 2], ['整柜练习', 1]],
-      items: [ex('plclamp'), ex('relay'), ex('combo'), ex('plcfr'), page('plc', 'PLC 故障灯测验'), ex('npn'), ex('pnp'), ex('two'), ex('analog'), ex('cyl'), ex('diode'), ex('valveisl'), ex('estop'), ex('srelay'), ex('lcurtain'), ex('stepper'), ex('servo'), { t: 'build', id: 'conveyor', name: '配柜 ★★★ 输送线 PLC 柜' }] },
-    { id: 'L6', title: '配盘工艺', goal: '端子选对、压牢，线号朝向一致，横平竖直，强弱电分开。', real: '师傅验收先看工艺',
-      items: [lesson('craft', '剥线 压端子 套线号'), lesson('ground', 'PE、0V 和屏蔽线'), page('cab', '柜体布局 + 小测'), { t: 'build', id: 'dist', name: '配柜 ★★ 车间动力配电箱' }] },
-    { id: 'L7', title: '故障排查', goal: '会按“看现象 → 缩小范围 → 量 → 确认”的顺序，用万用表找出故障点。', real: '调试、维修',
-      groups: [['方法', 1], ['实战排故', 7]],
-      items: [lesson('trouble', '排故方法：电压法和电阻法'), ex('f1'), ex('f2'), ex('f3'), ex('f4'), ex('f5'), ex('f6'), ex('f7')] },
-    { id: 'L8', title: '整柜实战', goal: '对照图纸，从选元件、布置、走线到验收，独立做完一台控制柜。', real: '独立配一台柜子',
-      items: [lesson('sheets', '看懂多页图纸'), { t: 'build', id: 'machine', name: '配柜 ★★★★ 自动化设备控制柜' }, { t: 'build', id: 'vfd', name: '配柜 ★★★★ 恒压供水变频柜' }, { t: 'build', id: 'line', name: '配柜 ★★★★★ 装配线综合柜（毕业设计）' }, lesson('iocheck', '送电对点：I/O 点检'), page('calc', '选型计算 + 小测')] },
+    { id: 'L3', title: '点动与自锁', goal: '按住转、松手停是点动；松手还转是自锁。两个都能看图接出来，送电试车一次通过。', real: '板前明线、线槽配线练习',
+      items: [ex('jog'), ex('hold'), lesson('craft', '剥线 压端子 套线号'), { t: 'build', id: 'pump', name: '配柜 ★ 水泵启停控制箱' }] },
+    { id: 'L4', title: '两地控制', goal: '两个地方都能启动、都能停：启动按钮并联，停止按钮串联。', real: '机床、输送线常见',
+      items: [ex('twoloc')] },
+    { id: 'L5', title: '主回路与正反转', goal: '三相主回路不串相；正反转一定要互锁，否则一按反转就短路跳闸。', real: '电工中级实操常考题',
+      items: [ex('main'), ex('fwdrev'), { t: 'build', id: 'hoist', name: '配柜 ★★ 提升机正反转箱' }] },
+    { id: 'L6', title: '星三角降压启动', goal: '知道电机接线盒怎么接星形 / 三角形，星三角启动先星后角、两个不能同时吸合。', real: '大电机启动常用',
+      items: [lesson('motorbox', '电机接线盒：星形 / 三角形'), ex('yd'), { t: 'build', id: 'yd', name: '配柜 ★★★ 风机星三角柜' }] },
+    { id: 'L7', title: '故障排查', goal: '会按“看现象 → 缩小范围 → 量 → 修好 → 复测 → 试运行”的顺序，用万用表找出故障点并修好。', real: '调试、维修',
+      items: [lesson('trouble', '排故方法：电压法和电阻法'), ex('f1'), ex('f6'), ex('f3'), ex('f5')] },
   ];
 
   // 每道接线题的学习阶段：读图题 → 看演示 → 跟着接 → 独立接 → 考核
@@ -51,6 +47,12 @@
       if (it.t === 'build') return P.buildScore(it.id === 'build' ? 'conveyor' : it.id) >= 70;
       return false;
     },
+    // 学过：动过手但还没验证（看过演示、跟着接过、做过读图题，或配柜打开过）
+    itemSeen(it) {
+      if (it.t === 'ex') return Object.keys(P.learn(it.id)).length > 0;
+      if (it.t === 'build') { const a = store.get('pp-build-v2', null); return !!(a && a.p && a.p[it.id]); }
+      return false;
+    },
     // 页面小测：全部答完且答对 80% 以上，这一页才算学完
     pageQuiz(id) { let n = 0, ok = 0; return { onAnswer: (q, right) => { n++; if (right) ok++; }, check: total => { if (n >= total && ok / total >= 0.8) P.setSeen(id); return P.seen(id); }, reset() { n = 0; ok = 0; } }; },
     itemName(it) { if (it.t === 'ex') { const e = PP.EX.find(x => x.id === it.id); return e ? e.name : it.id; } return it.name; },
@@ -64,7 +66,7 @@
     daily() {
       const today = new Date().toISOString().slice(0, 10), D = store.get('pp-daily-v1', {});
       if (D.day === today && D.qs) return D;
-      const CAT = { 安全: 0, 识图: 1, 接线: 3, 传感器: 5, PLC: 5, 通讯: 5, 变频器: 5, 布局: 6, 选型: 8 }, lv = Math.max(P.current(), 1);
+      const CAT = { 安全: 0, 识图: 1, 接线: 3, 布局: 3, 选型: 5 }, lv = Math.max(P.current(), 1);
       const seen = store.get('pp-qseen-v1', {}), wrong = new Set(store.get('pp-wrong-v1', []));
       const pool = PP.QZ.filter(q => (CAT[q[0]] ?? 9) <= lv + 1);
       const w = PP.QZ.filter(q => wrong.has(q[1])).slice(0, 2);

@@ -33,7 +33,7 @@
   <section class="card"><h2>电气图的三种类型<span>配一台柜子，这三张图对着看</span></h2>
     <div class="cols3">
       <div><h3>电气原理图</h3><p>表达电路怎么工作、元件之间的电气关系。看“谁和谁连、为什么这样连”。</p><button class="b small" data-ex="hold">去看自锁电路的原理图</button></div>
-      <div><h3>电气接线图 / 接线表</h3><p>指导实际接线：每根线从哪个端子到哪个端子、线号是多少。</p><button class="b small" data-ex="npn" data-view="wl">去看接线表和端子表</button></div>
+      <div><h3>电气接线图 / 接线表</h3><p>指导实际接线：每根线从哪个端子到哪个端子、线号是多少。</p><button class="b small" data-ex="hold" data-view="wl">去看自锁电路的接线表</button></div>
       <div><h3>元件布置图</h3><p>元件在柜里装在哪、怎么排列、线槽怎么走。</p><button class="b small" data-go="cab">去看电柜布置图</button></div>
     </div></section>
   <section class="card"><h2>看图四步</h2>
@@ -161,7 +161,7 @@
       const g = e.target.closest('[data-k]'); if (!g) return;
       selK = g.dataset.k; draw();
       const i = PP.CAB.info[selK]; if (!i) return;
-      el.querySelector('#cabinfo').innerHTML = `<h3>${i[0]}</h3><p>${i[1]}</p>${i[2].length ? `<p class="cap">相关练习：</p><div class="tools" style="margin-top:4px">${i[2].map(id => { const x = PP.EX.find(z => z.id === id); return `<button class="b small" data-ex="${id}">${x.name}</button>`; }).join('')}</div>` : ''}`;
+      el.querySelector('#cabinfo').innerHTML = `<h3>${i[0]}</h3><p>${i[1]}</p>${(rel => rel.length ? `<p class="cap">相关练习：</p><div class="tools" style="margin-top:4px">${rel.map(x => `<button class="b small" data-ex="${x.id}">${x.name}</button>`).join('')}</div>` : '')(i[2].map(id => PP.EX.find(z => z.id === id)).filter(Boolean))}`;
     };
     const found = new Set();
     const drawBad = () => {

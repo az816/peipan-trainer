@@ -1,8 +1,9 @@
-// pages-home.js — 首页：学习路线 9 关 + 我的进度 + 继续上次
+// pages-home.js — 首页：学习路线 8 关 + 我的进度 + 继续上次
 (function (G) {
   const PP = G.PP, P = PP.prog;
   const itemKey = it => `${it.t}:${it.id}`;
-  const itBtn = it => { const d = P.itemDone(it), best = it.t === 'ex' ? P.best(it.id) : null; return `<button class="it${d ? ' ok' : ''}" data-item="${itemKey(it)}"><i aria-hidden="true">${d ? '✓' : ''}</i>${P.itemName(it)}${best ? `<em>${best.score}分</em>` : ''}</button>`; };
+  // 三种状态：没学 · 学过（动过手还没验证）· 会了（独立接对 / 小测过关）
+  const itBtn = it => { const d = P.itemDone(it), s = !d && P.itemSeen(it), best = it.t === 'ex' ? P.best(it.id) : null; return `<button class="it${d ? ' ok' : s ? ' seen' : ''}" data-item="${itemKey(it)}" title="${d ? '会了' : s ? '学过，还没独立做对' : '没学'}"><i aria-hidden="true">${d ? '✓' : s ? '·' : ''}</i>${P.itemName(it)}${best ? `<em>${best.score}分</em>` : ''}</button>`; };
   // 项目多的关分几组显示，一眼看出这一关练的是哪几类
   function itemsHTML(L) {
     if (!L.groups) return `<div class="lv-items">${L.items.map(itBtn).join('')}</div>`;
@@ -28,7 +29,8 @@
       <div class="meterbox"><b>${tot.n}</b><span>/ ${tot.total} 项学完</span></div>
     </div>
   </section>
-  <ol class="lvstrip" aria-label="9 关进度">${strip}</ol>
+  <ol class="lvstrip" aria-label="${PP.LEVELS.length} 关进度">${strip}</ol>
+  <p class="lv-legend"><span><i></i>没学</span><span><i class="seen">·</i>学过</span><span><i class="ok">✓</i>会了（独立做对才算）</span></p>
   <section class="card daily" id="daily"></section>
   <ol class="levels">${PP.LEVELS.map((L, i) => {
       const s = P.level(L), st = s.done ? 'done' : i === ci ? 'cur' : '';

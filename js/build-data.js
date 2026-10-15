@@ -1,4 +1,4 @@
-// build-data.js — 配柜实战：8 套图纸（由易到难），每套有任务书、选型题、布置规则、走线题和评分。不碰 DOM，测试可直接加载。
+// build-data.js — 配柜实战：3 套继电控制图纸（由易到难，进阶的几套在 PP.ALL_BUILDS），每套有任务书、选型题、布置规则、走线题和评分。不碰 DOM，测试可直接加载。
 (function (G) {
   const PP = G.PP;
   const M = kW => (PP.calcMotor ? PP.calcMotor(kW) : { I: kW * 2 });
@@ -394,7 +394,9 @@
   // 由易到难的顺序（学习路线也按这个顺序放）
   const ORDER = ['pump', 'hoist', 'dist', 'yd', 'conveyor', 'machine', 'vfd', 'line'];
   PROJ.sort((a, b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id));
-  PP.BUILDS = PROJ;
+  // 新手路线只留三套纯继电控制的箱子：点动自锁 → 正反转 → 星三角；PLC、变频、配电的几套在 PP.ALL_BUILDS
+  PP.ALL_BUILDS = PROJ;
+  PP.BUILDS = PROJ.filter(p => ['pump', 'hoist', 'yd'].includes(p.id));
   PP.BUILD = PROJ.find(p => p.id === 'conveyor'); // 老代码和测试用
-  PP.buildOf = id => PROJ.find(p => p.id === id);
+  PP.buildOf = id => PP.BUILDS.find(p => p.id === id);
 })(typeof window !== 'undefined' ? window : globalThis);

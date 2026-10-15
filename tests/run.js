@@ -77,6 +77,21 @@ for (const [i, ex] of PP.EX.entries()) {
   if (!(r.on.KC2 && !r.on.KC3)) bad('星三角：启动时应星形');
   t += 3100; r = L.sim(); if (!(r.on.KC3 && !r.on.KC2)) bad('星三角：3 秒后应三角形', JSON.stringify(r.on));
 }
+// 结构化接线判断：错误类型码
+{
+  const ex = PP.EX.find(e => e.id === 'hold'), L = new PP.Lab(ex, [['XT1.L', 'FU.1']]);
+  const D = (a, b, pre) => L.diagnose(a, b, pre).code;
+  if (D('XT1.L', 'FU.1', true) !== 'DUP') bad('重复接线应是 DUP');
+  if (D('FU.1', 'XT1.L', true) !== 'DUP') bad('反向重复也应是 DUP');
+  if (D('XT1.L', 'FU.1') !== '') bad('正确的线应没有错误码');
+  if (D('FU.2', 'KM.A2') !== 'NET_MISMATCH') bad('线号不同应是 NET_MISMATCH');
+  const fx = L.diagnose('FU.2', 'KM.A2').fix; if (!fx || !fx.length || fx.includes('FU.2')) bad('NET_MISMATCH 要给出应该接的端子', fx);
+  const unused = ex.devs.flatMap(d => PP.DEV[d].terms.map(z => d + '.' + z[0])).find(t => !L.nm[t]);
+  if (unused && D(unused, 'FU.1') !== 'UNUSED_TERM') bad('不用的端子应是 UNUSED_TERM', unused);
+  const L2 = new PP.Lab(ex, [['FU.2', 'FR.95'], ['FU.2', 'SB1.1']]);
+  if (L2.diagnose('FU.2', 'KM.A1', true).code !== 'TERM_FULL') bad('端子满了应是 TERM_FULL');
+  if (L.whyWrong('FU.2', 'KM.A2') !== L.diagnose('FU.2', 'KM.A2').msg) bad('whyWrong 应和 diagnose 一致');
+}
 // 专题页数据
 if (PP.calcMotor) {
   console.log('专题页数据');
@@ -128,7 +143,7 @@ if (PP.R) {
 // 新元件的典型错接要能被试车查出来
 {
   console.log('典型错接');
-  const st = PP.EX.find(e => e.id === 'stepper'), sr = PP.EX.find(e => e.id === 'srelay');
+  const st = PP.ALL_EX.find(e => e.id === 'stepper'), sr = PP.ALL_EX.find(e => e.id === 'srelay');
   const swap = (ws, a, b) => ws.map(w => w.map(t => (t === a ? b : t === b ? a : t)));
   const base = PP.chain(st);
   const run = (ex, ws) => { const L = new PP.Lab(ex, ws); return L.runTest(); };
@@ -136,7 +151,7 @@ if (PP.R) {
   r = run(st, swap(base, 'STP.A-', 'STP.B+')); if (r.pass || r.r.on['DRV:run'] !== 'shake') bad('步进 A/B 混接应抖动', r.r && r.r.on['DRV:run']);
   r = run(sr, [...PP.chain(sr), ['SB2.3', 'SB2.4']].filter((w, i, a) => true)); if (r.pass) bad('复位端短接应查出（上电不能自己启动）');
   console.log('  步进对调相、A/B 混接、安全继电器复位短接都能查出');
-  const E = id => PP.EX.find(e => e.id === id);
+  const E = id => PP.ALL_EX.find(e => e.id === id);
   r = run(E('servo'), swap(PP.chain(E('servo')), 'SVM.U', 'SVM.V')); if (r.pass || !r.r.on['SVD:alm']) bad('伺服 UV 对调应报警');
   r = run(E('analog'), swap(PP.chain(E('analog')), 'PT.+', 'PT.-')); if (r.pass || r.r.on['AIM:ma'] !== 0) bad('变送器接反应 0mA');
   r = run(E('lcurtain'), PP.chain(E('lcurtain')).filter(w => !w.includes('SR.S22'))); if (r.pass) bad('光栅只接一路 OSSD 应查出');
@@ -170,6 +185,23 @@ if (PP.LEVELS) {
   PP.prog.mark('jog', 'solo'); if (!PP.prog.itemDone({ t: 'ex', id: 'jog' })) bad('独立接对应算学完');
   for (const k of Object.keys(mem)) delete mem[k];
   console.log(`  ${PP.LEVELS.length} 关，${PP.LEVELS.flatMap(L => L.items).length} 项`);
+  // 新手路线：不超过 8 关，只有继电控制；没有任何入口能进到 PLC、传感器、伺服、变频器
+  if (PP.LEVELS.length > 8) bad('新手路线超过 8 关', PP.LEVELS.length);
+  const ADV = ['plc', 'plcr', 'sensor', 'sensor2', 'svd', 'drv', 'vi', 'aim', 'sr', 'lc', 'valve', 'reed', 'pt'];
+  PP.EX.forEach(e => e.devs.forEach(d => { if (ADV.includes(PP.DEV[d].kind)) bad('新手题里出现进阶元件', e.id, d); }));
+  ['jog', 'hold', 'twoloc', 'fwdrev', 'yd'].forEach(id => { if (!inLv.includes(id)) bad('核心回路不在路线里', id); });
+  const order = ['jog', 'hold', 'twoloc', 'fwdrev', 'yd'].map(id => inLv.indexOf(id));
+  if (order.some((x, i) => i && x < order[i - 1])) bad('核心回路顺序不是由易到难', order);
+  if (PP.LEVELS.some(L => L.items.some(it => ['plc', 'iocheck', 'sheets', 'ground'].includes(it.id)))) bad('路线里还有进阶课');
+  if (PP.QZ.some(q => ['PLC', '传感器', '通讯', '变频器'].includes(q[0]))) bad('题库里还有进阶题');
+  if (PP.BUILDS.map(b => b.id).join() !== 'pump,hoist,yd') bad('配柜应只留三套继电控制', PP.BUILDS.map(b => b.id));
+  // 页面里写死的题目链接、配柜关联的控制回路，都必须是新手路线里还在的题（pages-plc 整页已不进导航）
+  const ids = new Set(PP.EX.map(e => e.id));
+  for (const f of fs.readdirSync(path.join(__dirname, '..', 'js')).filter(f => f.endsWith('.js') && f !== 'pages-plc.js')) {
+    const src = fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8');
+    for (const m of src.matchAll(/data-ex="([a-z0-9]+)"/g)) if (!ids.has(m[1])) bad('链接指向不在路线里的题', f, m[1]);
+  }
+  PP.BUILDS.forEach(b => { if (b.ctrlEx && !ids.has(b.ctrlEx)) bad('配柜控制回路关联的题不在路线里', b.id, b.ctrlEx); });
 }
 // 配柜实战：参考答案满分，常见错误能扣分
 if (PP.BUILD) {

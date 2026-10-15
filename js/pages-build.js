@@ -1,4 +1,4 @@
-// pages-build.js — 配柜实战：8 套图纸由易到难，每套都走 看图纸 → 选元件 → 布置 → 走线 → 验收出图
+// pages-build.js — 配柜实战：3 套图纸由易到难，每套都走 看图纸 → 选元件 → 布置 → 走线 → 验收出图
 (function (G) {
   const PP = G.PP, ALL = PP.BUILDS;
   let B = ALL[0];
@@ -178,7 +178,7 @@
   const scoreOf = id => { const p = PP.buildOf(id), s = all.p[id]; return s && s.seen && s.seen[4] ? p.score(s).total : null; };
   function mount(el) {
     el.innerHTML = `<div class="page">
-  <div class="page-head"><h1>配柜实战</h1><p>对照图纸，自己做一台控制柜：先看懂图纸和任务书，再选元件、把元件装上导轨、决定每根线用多粗、什么颜色、走哪条线槽，最后验收出图。8 套图纸从简单到难，建议按顺序做；每套练熟了，再开「考核模式」不看提示做一遍。</p></div>
+  <div class="page-head"><h1>配柜实战</h1><p>对照图纸，自己做一台控制柜：先看懂图纸和任务书，再选元件、把元件装上导轨、决定每根线用多粗、什么颜色、走哪条线槽，最后验收出图。${ALL.length} 套图纸从简单到难，建议按顺序做；每套练熟了，再开「考核模式」不看提示做一遍。</p></div>
   <div class="projs" id="bproj"></div>
   <ol class="steps" id="bst"></ol>
   <div id="bv"></div>

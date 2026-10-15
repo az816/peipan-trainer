@@ -643,4 +643,9 @@
       symptom: '一合上电源，绿色运行灯就亮了，可电机根本没启动。操作工以为设备在运行。', task: '看图纸：运行灯 HL1 的 X1 应该接哪个线号？再用万用表量它现在接到了哪里。' }),
   ];
   PP.EX.forEach(e => { if (!e.preset) delete e.preset; });
+  // 新手路线只留最基础的继电控制：点动 → 自锁 → 两地 → 主回路 → 正反转 → 星三角，排故题也只用这几个回路。
+  // PLC、传感器、伺服、变频器等进阶题先不出现（数据还在，git 标签 archive/full-v1 是完整版）。
+  PP.CORE_EX = ['jog', 'hold', 'twoloc', 'main', 'fwdrev', 'yd', 'f1', 'f6', 'f3', 'f5'];
+  PP.ALL_EX = PP.EX;
+  PP.EX = PP.CORE_EX.map(id => PP.ALL_EX.find(e => e.id === id));
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -6,7 +6,7 @@
 
   function ledSVG(sc) {
     const col = c => ({ g: 'var(--led)', y: '#f2c200', r: 'var(--live)', rf: 'var(--live)' }[c] || 'var(--bg)');
-    const L = (y, c, t) => `<circle cx="40" cy="${y}" r="7" fill="${col(c)}" stroke="var(--dev-edge)"${c === 'rf' ? ' class="blink"' : ''}/><text x="54" y="${y + 4}" class="lt">${t}</text>`;
+    const L = (y, c, t) => `${c === 'rf' ? `<circle cx="40" cy="${y}" r="7" fill="var(--bg)" stroke="var(--dev-edge)"/>` : ''}<circle cx="40" cy="${y}" r="7" fill="${col(c)}" stroke="var(--dev-edge)"${c === 'rf' ? ' class="blink"' : ''}/><text x="54" y="${y + 4}" class="lt">${t}</text>`;
     return `<rect x="6" y="6" width="248" height="150" rx="6" fill="var(--dev)" stroke="var(--dev-edge)" stroke-width="1.5"/><rect x="120" y="30" width="120" height="70" rx="3" fill="var(--plate)" stroke="var(--dev-edge)"/><text x="180" y="62" text-anchor="middle" class="lt b">CPU 1214C</text><text x="180" y="78" text-anchor="middle" class="lt">DC/DC/DC</text>`
       + L(34, sc.run, 'RUN/STOP') + L(64, sc.err, 'ERROR') + L(94, sc.maint, 'MAINT') + L(124, sc.link, 'LINK') + `<rect x="150" y="116" width="34" height="26" rx="2" fill="var(--bg)" stroke="var(--dev-edge)"/><text x="167" y="152" text-anchor="middle" class="lt">PN 网口</text>`;
   }
@@ -187,7 +187,7 @@
   function mountQuiz(el) {
     const cats = [...new Set(PP.QZ.map(q => q[0]))];
     let cat = '全部';
-    el.innerHTML = `<div class="page"><div class="page-head"><h1>综合测验</h1><p>题库 ${PP.QZ.length} 题，覆盖识图、接线、传感器、PLC、通讯、变频器、布局、安全、选型。每组随机 12 题，答错的会进错题本。</p></div>
+    el.innerHTML = `<div class="page"><div class="page-head"><h1>综合测验</h1><p>题库 ${PP.QZ.length} 题，覆盖${cats.join('、')}。每组随机 12 题，答错的会进错题本。</p></div>
   <section class="card"><div class="vt" id="qcats"></div><div class="tools" style="margin-top:0"><button class="b primary" id="qnew">开始一组</button><button class="b" id="qwrong">练错题</button><button class="b ghost" id="qclear">清空错题本</button><span class="cap" id="qwc"></span></div></section>
   <section class="card"><div id="qbox"></div></section></div>`;
     const $ = id => el.querySelector('#' + id);
@@ -204,5 +204,7 @@
     drawCats(); saveW(); start(PP.pick(pool(), 12));
   }
 
-  PP.PAGES.push({ id: 'plc', title: 'PLC 与通讯', order: 4, group: 'kb', mount: mountPLC }, { id: 'quiz', title: '综合测验', order: 6, mount: mountQuiz });
+  // 「PLC 与通讯」属于进阶内容，新手版不放进知识库导航（mountPLC 保留，恢复时把它加回来即可）
+  PP.PAGES.push({ id: 'quiz', title: '综合测验', order: 6, mount: mountQuiz });
+  PP.mountPLC = mountPLC;
 })(window);
